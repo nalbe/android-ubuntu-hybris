@@ -1,0 +1,58 @@
+From: android-ubuntu-gl
+Subject: [PATCH] tls_patcher: enable TLS-slot redirection by default
+
+On this device the Mali userspace driver segfaults without the TLS-slot
+patcher, and every runtime script ends up exporting HYBRIS_PATCH_TLS=1
+anyway.  Make the patched-in behaviour the default so any process (even
+with a bare environment) gets a working Mali driver; HYBRIS_PATCH_TLS=0
+opts out.  Apply AFTER tls-patcher.patch.
+
+---
+ hybris/common/hooks.c      | 11 ++++++++---
+ hybris/common/tls_patcher.c|  9 ++++-----
+ 2 files changed, 13 insertions(+), 7 deletions(-)
+
+--- a/hybris/common/hooks.c
++++ b/hybris/common/hooks.c
+@@ -3687,8 +3687,13 @@
+ #endif
+     hybris_tls_patcher_t tls_patcher = NULL;
+ #ifdef __aarch64__
+-    if (getenv("HYBRIS_PATCH_TLS") != NULL)
+-        tls_patcher = hybris_patch_tls;
++    {
++        /* TLS-slot redirection is ON by default on this device fork (the Mali
++         * userspace driver segfaults without it); HYBRIS_PATCH_TLS=0 opts out. */
++        const char *patch_tls = getenv("HYBRIS_PATCH_TLS");
++        if (patch_tls == NULL || patch_tls[0] != '0')
++            tls_patcher = hybris_patch_tls;
++    }
+ #endif
+ 
+     /* Now its time to setup the linker itself */
+--- a/hybris/common/tls_patcher.c
++++ b/hybris/common/tls_patcher.c
+@@ -45,17 +45,16 @@
+     static const char* patch_tls = NULL;
+     static int init_done = 0;
+ 
+-    /* Initialize on first call */
++    /* Initialize on first call; ON by default on this device fork, an
++     * explicit HYBRIS_PATCH_TLS=0 opts out ("1" = all libs, or a
++     * colon-separated list of library basenames). */
+     if (!init_done) {
+         patch_tls = getenv("HYBRIS_PATCH_TLS");
++        if (!patch_tls)
++            patch_tls = "1";
+         init_done = 1;
+     }
+ 
+-    /* No environment variable set - do nothing */
+-    if (!patch_tls) {
+-        return 0;
+-    }
+-
+     /* Simple enable/disable */
+     if (patch_tls[0] == '0' || patch_tls[0] == '1') {
+         return patch_tls[0] == '1';
+

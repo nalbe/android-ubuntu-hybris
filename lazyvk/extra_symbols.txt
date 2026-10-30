@@ -1,0 +1,5 @@
+# Entrypoints the shim must export although the hybris loader does not
+# provide them: clients (SDL/X11, glvnd probes) link against them, so a
+# missing symbol would fail the whole dlopen.  The slot stays NULL and the
+# stub reports the call.  One name per line, '#' starts a comment.
+vkCreateXlibSurfaceKHR

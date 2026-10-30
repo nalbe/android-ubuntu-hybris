@@ -1,0 +1,13 @@
+diff --git a/hybris/gralloc/gralloc.c b/hybris/gralloc/gralloc.c
+index 1d97dcd..b1c2e3e 100644
+--- a/hybris/gralloc/gralloc.c
++++ b/hybris/gralloc/gralloc.c
+@@ -159,7 +159,7 @@ void hybris_gralloc_initialize(int framebuffer)
+                 version = -2;
+                 fprintf(stderr, "failed to open gralloc module with both version 0 and 1 methods\n");
+                 hybris_gralloc_deinitialize();
+-                assert(NULL);
++                fprintf(stderr, "PATCHED(headless): continuing without gralloc\n");
+             }
+         } else {
+             fprintf(stderr, "failed to find/load gralloc module\n");
